@@ -1,0 +1,45 @@
+--- gnuradio/gnuradio-core/src/lib/io/gri_wavfile.h	2012-06-08 19:14:37.901973650 -0400
++++ /media/PENDRIVE/gnuradio.built.withfix/gnuradio-core/src/lib/io/gri_wavfile.h	2012-06-08 17:48:36.000000000 -0400
+@@ -46,7 +46,7 @@
+  * \return True on a successful read, false if the file could not be read or is
+  *         not a valid WAV file.
+  */
+-bool
++GR_CORE_API bool
+ gri_wavheader_parse(FILE *fp,
+ 		    unsigned int &sample_rate,
+ 		    int &nchans,
+@@ -60,7 +60,7 @@
+  *
+  * Takes care of endianness.
+  */
+-short int
++GR_CORE_API short int
+ gri_wav_read_sample(FILE *fp, int bytes_per_sample);
+ 
+ 
+@@ -71,7 +71,7 @@
+  * a-priori (file and chunk lengths). Use gri_wavheader_complete() to fill
+  * these in.
+  */
+-bool
++GR_CORE_API bool
+ gri_wavheader_write(FILE *fp,
+ 		 unsigned int sample_rate,
+ 		 int nchans,
+@@ -82,7 +82,7 @@
+  *
+  * Takes care of endianness.
+  */
+-void
++GR_CORE_API void
+ gri_wav_write_sample(FILE *fp, short int sample, int bytes_per_sample);
+ 
+ 
+@@ -97,5 +97,5 @@
+  * \p fp File pointer to an open WAV file with a blank header
+  * \p byte_count Length of all samples written to the file in bytes.
+  */
+-bool
++GR_CORE_API bool
+ gri_wavheader_complete(FILE *fp, unsigned int byte_count);

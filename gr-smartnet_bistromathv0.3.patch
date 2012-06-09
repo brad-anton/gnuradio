@@ -1,0 +1,105 @@
+diff -urN gr-smartnet/Makefile.common gr-smartnet.mod/Makefile.common
+--- gr-smartnet/Makefile.common	2012-06-09 03:12:57.164089627 -0400
++++ gr-smartnet.mod/Makefile.common	2012-06-09 03:14:08.148441614 -0400
+@@ -35,7 +35,8 @@
+ STD_DEFINES_AND_INCLUDES = \
+ 	$(DEFINES) \
+ 	-I$(GNURADIO_CORE_INCLUDEDIR) \
+-	-I$(GNURADIO_CORE_INCLUDEDIR)/swig
++	-I$(GNURADIO_CORE_INCLUDEDIR)/swig \
++	-I/usr/local/include/gruel/swig
+ 
+ # includes
+ grincludedir = $(includedir)/gnuradio
+diff -urN gr-smartnet/src/lib/smartnet_crc.cc gr-smartnet.mod/src/lib/smartnet_crc.cc
+--- gr-smartnet/src/lib/smartnet_crc.cc	2012-06-09 03:12:57.184089726 -0400
++++ gr-smartnet.mod/src/lib/smartnet_crc.cc	2012-06-09 03:14:08.148441614 -0400
+@@ -31,6 +31,7 @@
+ #include <gr_tags.h>
+ #include <sstream>
+ #include <smartnet_types.h>
++#include <iostream>
+ 
+ #define VERBOSE 0
+ 
+diff -urN gr-smartnet/src/lib/smartnet_deinterleave.cc gr-smartnet.mod/src/lib/smartnet_deinterleave.cc
+--- gr-smartnet/src/lib/smartnet_deinterleave.cc	2012-06-09 03:12:57.184089726 -0400
++++ gr-smartnet.mod/src/lib/smartnet_deinterleave.cc	2012-06-09 03:14:08.148441614 -0400
+@@ -28,6 +28,7 @@
+ #include <smartnet_deinterleave.h>
+ #include <gr_io_signature.h>
+ #include <gr_tags.h>
++#include <iostream>
+ 
+ #define VERBOSE 0
+ 
+diff -urN gr-smartnet/src/python/smartnet2decode.py gr-smartnet.mod/src/python/smartnet2decode.py
+--- gr-smartnet/src/python/smartnet2decode.py	2012-06-09 03:12:57.188089753 -0400
++++ gr-smartnet.mod/src/python/smartnet2decode.py	2012-06-09 03:14:10.096451264 -0400
+@@ -10,7 +10,8 @@
+ from gnuradio import gr, gru, blks2, optfir, digital
+ from gnuradio import audio
+ from gnuradio import eng_notation
+-from gnuradio import uhd
++#from gnuradio import uhd
++from osmosdr import *
+ from fsk_demod import fsk_demod
+ from optparse import OptionParser
+ from gnuradio.eng_option import eng_option
+@@ -20,6 +21,8 @@
+ import gnuradio.gr.gr_threading as _threading
+ import csv
+ 
++rtl_rate = 2.4e6
++
+ class top_block_runner(_threading.Thread):
+     def __init__(self, tb):
+         _threading.Thread.__init__(self)
+@@ -41,6 +44,7 @@
+ 			self.rate = options.rate
+ 
+ 		else:
++			'''
+ 			self.u = uhd.usrp_source(options.addr,
+ 									 io_type=uhd.io_type.COMPLEX_FLOAT32,
+ 									 num_channels=1)
+@@ -54,20 +58,27 @@
+ 			# Set the antenna
+ 			if(options.antenna):
+ 				self.u.set_antenna(options.antenna, 0)
++			'''
++			self.u = source_c()
++			self.u.set_sample_rate(rtl_rate)
++			self.rate = rtl_rate
+ 			
+ 			self.centerfreq = options.centerfreq
+ 			print "Tuning to: %fMHz" % (self.centerfreq - options.error)
+-			if not(self.tune(options.centerfreq - options.error)):
+-				print "Failed to set initial frequency"
+ 
++#			if not(self.tune(options.centerfreq - options.error)):
++			if not(self.u.set_center_freq(options.centerfreq - options.error)):
++				print "Failed to set initial frequency"
++			'''
+ 			if options.gain is None: #set to halfway
+ 				g = self.u.get_gain_range()
+ 				options.gain = (g.start()+g.stop()) / 2.0
+-
++			'''
++			self.u.set_gain_mode(0)
+ 			print "Setting gain to %i" % options.gain
+ 			self.u.set_gain(options.gain)
+ 
+-			self.u.set_bandwidth(options.bandwidth)
++#			self.u.set_bandwidth(options.bandwidth)
+ 
+ 		print "Samples per second is %i" % self.rate
+ 
+@@ -216,6 +227,7 @@
+ 	groupflag = bool(groupflag)
+ 
+ #	print "Command is",command
++	print "Command ",hex(command), " address ",hex(address)
+ 	if longtglist is not None and longtglist.get(str(lookupaddr), None) is not None:
+ 		longname = longtglist[str(lookupaddr)] #the mask is to screen out extra status bits, which we can add in later (see the RadioReference.com wiki on SmartNet Type II)
+ 	else:
